@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="forecast-card">
+    <h1>5-Day Forecast for {{ city }}</h1>
+    
+    {% for day, forecasts in forecast.items %}
+    <div class="day-forecast">
+        <h3>{{ day }}</h3>
+        <div class="hourly-forecasts">
+            {% for forecast in forecasts %}
+            <div class="hour-forecast">
+                <p>{{ forecast.time }}</p>
+                <img src="http://openweathermap.org/img/wn/{{ forecast.icon }}.png" alt="Weather icon">
+                <p>{{ forecast.temp }}°C</p>
+                <p>{{ forecast.description }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
