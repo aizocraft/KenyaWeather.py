@@ -14,6 +14,12 @@ A Django-based web application that provides weather forecasts for Kenyan cities
 - 🗺️ Kenyan city autocomplete
 - 📱 Mobile-responsive design
 
+## Screenshots
+
+![Capture 1](pictures/Capture1.PNG)
+![Capture 2](pictures/Capture2.PNG)
+![Detecting Location](pictures/Detecting%20Location.PNG)
+
 ## Quick Start
 
 ### Prerequisites
