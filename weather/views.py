@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from geopy.geocoders import Nominatim
 from datetime import datetime
 import json
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from weather.data.cities import KENYAN_CITIES  
 
 load_dotenv()
@@ -136,3 +136,6 @@ def autocomplete(request):
     term = request.GET.get('term', '')
     suggestions = [loc['name'] for loc in KENYAN_CITIES if term.lower() in loc['name'].lower()]
     return JsonResponse(suggestions, safe=False)
+
+def health(request):
+    return HttpResponse("OK", status=200)
