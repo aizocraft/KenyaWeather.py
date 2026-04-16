@@ -1,17 +1,16 @@
 import os
 import requests
-from django.shortcuts import render, redirect  # Added redirect here
+from django.shortcuts import render, redirect  
 from dotenv import load_dotenv
 from geopy.geocoders import Nominatim
 from datetime import datetime
 import json
 from django.http import JsonResponse
+from weather.data.cities import KENYAN_CITIES  
 
 load_dotenv()
 
 # Kenyan cities data for autocomplete
-with open(os.path.join(os.path.dirname(__file__), 'data/kenyan_cities.json')) as f:
-    KENYAN_CITIES = json.load(f)
 
 def get_location(request):
     """Enhanced location detection with multiple fallbacks"""
