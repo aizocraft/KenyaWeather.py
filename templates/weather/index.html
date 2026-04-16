@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kenya Weather | {{ city }}</title>
+
+        <!-- SVG Favicon with sun and cloud -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='grad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%233498db;stop-opacity:1' /%3E%3Cstop offset='100%25' style='stop-color:%232980b9;stop-opacity:1' /%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='50' cy='50' r='45' fill='url(%23grad)'/%3E%3Ccircle cx='35' cy='45' r='12' fill='%23FFD700'/%3E%3Cpath d='M55 40 Q65 35 70 45 Q75 40 80 48 Q85 55 75 58 L50 58 Q45 58 45 52 Q45 45 50 42 Z' fill='white'/%3E%3C/svg%3E">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -73,9 +76,41 @@
             z-index: 1000;
             display: none;
         }
+        
+        /* Loading spinner */
+        .spinner-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
+    <div class="spinner-overlay" id="spinnerOverlay">
+        <div class="spinner"></div>
+    </div>
+    
     <div class="container py-5">
         <div class="row justify-content-center">
             <div class="col-lg-8">
@@ -88,7 +123,7 @@
                         </div>
                         
                         <div class="search-box mb-4">
-                            <form method="POST" action="{% url 'city_search' %}" class="d-flex">
+                            <form method="POST" action="{% url 'city_search' %}" class="d-flex" id="searchForm">
                                 {% csrf_token %}
                                 <input type="text" name="city" class="form-control me-2" placeholder="Search Kenyan cities..." 
                                        id="citySearch" list="kenyanCities" autocomplete="off">
@@ -109,7 +144,9 @@
                         
                         <h1 class="display-4">{{ city }}, {{ country }}</h1>
                         <div class="weather-icon my-3">
-                            <img src="http://openweathermap.org/img/wn/{{ icon }}@4x.png" alt="Weather icon">
+                            <!-- FIXED: Changed from HTTP to HTTPS -->
+                            <img src="https://openweathermap.org/img/wn/{{ icon }}@4x.png" alt="Weather icon" 
+                                 onerror="this.onerror=null; this.src='https://openweathermap.org/img/wn/{{ icon }}@4x.png';">
                         </div>
                         <h2 class="display-3">{{ current_temp }}°C</h2>
                         <h3 class="text-capitalize">{{ description }}</h3>
@@ -146,10 +183,12 @@
                         <h4 class="mt-4 mb-3">5-Day Forecast</h4>
                         <div class="row">
                             {% for day in forecast %}
-                            <div class="col">
-                                <div class="forecast-day p-3 text-center bg-light">
+                            <div class="col-md mb-3">
+                                <div class="forecast-day p-3 text-center bg-light h-100">
                                     <h5>{{ day.date }}</h5>
-                                    <img src="http://openweathermap.org/img/wn/{{ day.icon }}@2x.png" alt="Weather icon">
+                                    <!-- FIXED: Changed from HTTP to HTTPS -->
+                                    <img src="https://openweathermap.org/img/wn/{{ day.icon }}@2x.png" alt="Weather icon"
+                                         onerror="this.onerror=null; this.src='https://openweathermap.org/img/wn/{{ day.icon }}@2x.png';">
                                     <div class="temps mt-2">
                                         <span class="text-primary">{{ day.max_temp }}°</span> / 
                                         <span class="text-secondary">{{ day.min_temp }}°</span>
@@ -162,14 +201,14 @@
                         
                         <!-- Sunrise/Sunset -->
                         <div class="row mt-4">
-                            <div class="col-md-6">
+                            <div class="col-md-6 mb-3">
                                 <div class="p-3 bg-light rounded text-center">
                                     <i class="fas fa-sun fa-2x mb-2 text-warning"></i>
                                     <h5>Sunrise</h5>
                                     <p class="mb-0">{{ sunrise }}</p>
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-6 mb-3">
                                 <div class="p-3 bg-light rounded text-center">
                                     <i class="fas fa-moon fa-2x mb-2 text-secondary"></i>
                                     <h5>Sunset</h5>
@@ -185,10 +224,22 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Show/hide spinner function
+        function showSpinner() {
+            document.getElementById('spinnerOverlay').style.display = 'flex';
+        }
+        
+        function hideSpinner() {
+            document.getElementById('spinnerOverlay').style.display = 'none';
+        }
+        
+        // Get user location
         function getLocation() {
             const locationBtn = document.querySelector('.btn-location');
+            const originalText = locationBtn.innerHTML;
             locationBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Detecting Location...';
             locationBtn.disabled = true;
+            showSpinner();
             
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
@@ -196,34 +247,80 @@
                         window.location.href = `/?lat=${position.coords.latitude}&lon=${position.coords.longitude}`;
                     },
                     function(error) {
-                        alert("Could not get your location. Using default Nairobi location.");
+                        hideSpinner();
+                        let errorMessage = "Could not get your location. Using default Nairobi location.";
+                        if (error.code === 1) {
+                            errorMessage = "Location permission denied. Using default Nairobi location.";
+                        } else if (error.code === 2) {
+                            errorMessage = "Location unavailable. Using default Nairobi location.";
+                        }
+                        alert(errorMessage);
                         window.location.href = "/";
                     }
                 );
             } else {
+                hideSpinner();
                 alert("Geolocation is not supported by your browser. Using default Nairobi location.");
                 window.location.href = "/";
             }
         }
         
-     // City search autocomplete
-const citySearch = document.getElementById('citySearch');
-citySearch.addEventListener('input', function() {
-    const input = this.value.toLowerCase();
-    if (input.length > 2) {
-        fetch(`/autocomplete/?term=${input}`)
-            .then(response => response.json())
-            .then(data => {
-                const datalist = document.getElementById('kenyanCities');
-                datalist.innerHTML = '';
-                data.forEach(item => {
-                    const option = document.createElement('option');
-                    option.value = item;
-                    datalist.appendChild(option);
-                });
-            });
-    }
-});
+        // City search autocomplete with HTTPS and spinner
+        const citySearch = document.getElementById('citySearch');
+        const searchForm = document.getElementById('searchForm');
+        
+        // Add spinner on form submit
+        searchForm.addEventListener('submit', function() {
+            showSpinner();
+        });
+        
+        // Autocomplete functionality
+        let debounceTimer;
+        citySearch.addEventListener('input', function() {
+            const input = this.value.toLowerCase();
+            if (input.length > 2) {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                    fetch(`/autocomplete/?term=${encodeURIComponent(input)}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            const datalist = document.getElementById('kenyanCities');
+                            datalist.innerHTML = '';
+                            data.forEach(item => {
+                                const option = document.createElement('option');
+                                option.value = item;
+                                datalist.appendChild(option);
+                            });
+                        })
+                        .catch(error => console.error('Autocomplete error:', error));
+                }, 300);
+            }
+        });
+        
+        // Handle Enter key in search
+        citySearch.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                showSpinner();
+                searchForm.submit();
+            }
+        });
+        
+        // Check if URL has lat/lon parameters and show loading if needed
+        window.addEventListener('load', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('lat') && urlParams.has('lon')) {
+                // Already loading from location
+                showSpinner();
+            } else {
+                hideSpinner();
+            }
+        });
+        
+        // Handle page refresh/back button
+        window.addEventListener('pageshow', function() {
+            hideSpinner();
+        });
     </script>
 </body>
 </html>

@@ -44,14 +44,30 @@ def get_weather_data(lat, lon):
     api_key = os.getenv("OPENWEATHER_API_KEY")
     url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={api_key}&units=metric"
     response = requests.get(url)
-    return response.json()
+    data = response.json()
+    
+    # Ensure icon URL uses HTTPS
+    if 'weather' in data and len(data['weather']) > 0:
+        icon_code = data['weather'][0]['icon']
+        data['weather'][0]['icon_url'] = f"https://openweathermap.org/img/wn/{icon_code}@2x.png"
+    
+    return data
 
 def get_forecast_data(lat, lon):
     """Fetch 5-day forecast data"""
     api_key = os.getenv("OPENWEATHER_API_KEY")
     url = f"https://api.openweathermap.org/data/2.5/forecast?lat={lat}&lon={lon}&appid={api_key}&units=metric"
     response = requests.get(url)
-    return response.json()
+    data = response.json()
+    
+    # Ensure all forecast icons use HTTPS
+    if 'list' in data:
+        for item in data['list']:
+            if 'weather' in item and len(item['weather']) > 0:
+                icon_code = item['weather'][0]['icon']
+                item['weather'][0]['icon_url'] = f"https://openweathermap.org/img/wn/{icon_code}.png"
+    
+    return data
 
 def home(request):
     """Main view with current weather and forecast"""
